@@ -157,7 +157,7 @@ export default function InputHasilLomba() {
             {/* Tabel input */}
             <div className="overflow-x-auto w-full bg-gray-800 p-2 rounded-lg">
               <h2 className="text-lg md:text-xl font-semibold text-yellow-400 mb-2">
-                Batch {b + 1} - Input
+                Batch {b + 1}
               </h2>
               <table className="min-w-max w-full table-auto border-collapse border border-gray-500 text-sm md:text-base">
                 <thead>
@@ -203,7 +203,7 @@ export default function InputHasilLomba() {
             {/* Tabel referensi */}
             <div className="overflow-x-auto w-full bg-gray-800 p-2 rounded-lg">
               <h2 className="text-lg md:text-xl font-semibold text-green-400 mb-2">
-                Batch {b + 1} - Peserta (DB)
+                Batch {b + 1} - Peserta
               </h2>
               <table className="min-w-max w-full table-auto border-collapse border border-gray-500 text-sm md:text-base">
                 <thead>
