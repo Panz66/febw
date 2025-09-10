@@ -9,14 +9,24 @@ export default function DaftarLomba() {
   const [loadingDelete, setLoadingDelete] = useState<number | null>(null);
 
   // ambil data dari backend
-  const fetchData = async () => {
-    try {
-      const res = await getLombas();
+const fetchData = async () => {
+  try {
+    const res = await getLombas();
+
+    console.log("DEBUG response lomba:", res.data);
+
+    if (Array.isArray(res.data)) {
       setLombas(res.data);
-    } catch (err) {
-      console.error("Gagal mengambil data lomba:", err);
+    } else {
+      console.error("Response bukan array:", res.data);
+      setLombas([]); // fallback
     }
-  };
+  } catch (err) {
+    console.error("Gagal mengambil data lomba:", err);
+    setLombas([]);
+  }
+};
+
 
   // hapus data lomba beserta peserta
   const handleDelete = async (id: number) => {
