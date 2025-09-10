@@ -153,18 +153,18 @@ export default function InputHasilLomba() {
         const pesertaBatchDb = pesertaDb.filter((p) => p.batch === b + 1);
 
         return (
-          <div key={b} className="mb-8 grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div key={b} className="mb-8 flex flex-col gap-4">
             {/* Tabel input */}
-            <div className="overflow-x-auto bg-gray-800 p-2 rounded-lg">
+            <div className="overflow-x-auto w-full bg-gray-800 p-2 rounded-lg">
               <h2 className="text-lg md:text-xl font-semibold text-yellow-400 mb-2">
                 Batch {b + 1} - Input
               </h2>
-              <table className="min-w-[400px] w-full border-collapse border border-gray-500 text-sm md:text-base">
+              <table className="min-w-max w-full table-auto border-collapse border border-gray-500 text-sm md:text-base">
                 <thead>
                   <tr>
                     <th className="border p-2 w-16">Plat</th>
-                    <th className="border p-2 min-w-[150px]">Nama Rider</th>
-                    <th className="border p-2 min-w-[120px]">Community</th>
+                    <th className="border p-2 min-w-[100px]">Nama Rider</th>
+                    <th className="border p-2 min-w-[100px]">Community</th>
                     <th className="border p-2 w-16">Finish</th>
                     {showPenalty && <th className="border p-2 w-20">Penalty</th>}
                   </tr>
@@ -201,11 +201,11 @@ export default function InputHasilLomba() {
             </div>
 
             {/* Tabel referensi */}
-            <div className="overflow-x-auto bg-gray-800 p-2 rounded-lg">
+            <div className="overflow-x-auto w-full bg-gray-800 p-2 rounded-lg">
               <h2 className="text-lg md:text-xl font-semibold text-green-400 mb-2">
                 Batch {b + 1} - Peserta (DB)
               </h2>
-              <table className="min-w-[120px] w-full border-collapse border border-gray-500 text-sm md:text-base">
+              <table className="min-w-max w-full table-auto border-collapse border border-gray-500 text-sm md:text-base">
                 <thead>
                   <tr>
                     <th className="border p-2 w-12">Plat</th>
@@ -223,6 +223,7 @@ export default function InputHasilLomba() {
           </div>
         );
       })}
+
 
       <div className="flex flex-wrap justify-center gap-4 mt-4">
         <button
