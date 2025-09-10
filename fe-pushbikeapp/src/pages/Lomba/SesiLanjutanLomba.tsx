@@ -83,25 +83,25 @@ export default function PertandinganLanjutan() {
         });
 
         const buatMatch = (pesertaArray: Peserta[], batchCountLocal: number) => {
-        const matches: Peserta[][] = [];
-        const halfBatch = Math.ceil(batchCountLocal / 2);
+      const matches: Peserta[][] = [];
+      const halfBatch = Math.ceil(batchCountLocal / 2);
 
-        for (let i = 0; i < halfBatch; i++) {
-          const batchA = pesertaArray.filter((p) => p.batch === batches[i]);
-          const batchB = batches[i + halfBatch]
-            ? pesertaArray.filter((p) => p.batch === batches[i + halfBatch])
-            : [];
+      for (let i = 0; i < halfBatch; i++) {
+        const batchA = pesertaArray.filter((p) => p.batch === batches[i]);
+        const batchB = batches[i + halfBatch]
+          ? pesertaArray.filter((p) => p.batch === batches[i + halfBatch])
+          : [];
 
-          // Urutkan batchA dan batchB berdasarkan finish atau totalPoint (prioritas awal)
-          batchA.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
-          batchB.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
+        // Urutkan batchA dan batchB berdasarkan finish atau totalPoint (prioritas awal)
+        batchA.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
+        batchB.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
 
-          // Gabungkan tanpa interleave, match awal batchA dulu, batchB setelahnya
-          matches.push([...batchA, ...batchB]);
-        }
+        // Gabungkan tanpa interleave, match awal batchA dulu, batchB setelahnya
+        matches.push([...batchA, ...batchB]);
+      }
 
-        return matches;
-      };
+      return matches;
+    };
 
         setMatchesUtama(buatMatch(utama, batchCount));
         setMatchesSekunder(buatMatch(sekunder, batchCount));
