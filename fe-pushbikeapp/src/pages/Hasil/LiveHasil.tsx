@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { QRCodeCanvas } from "qrcode.react";
 import api from "@/services/api";
 
 interface PesertaBatch {
@@ -50,6 +51,8 @@ export default function LiveHasil() {
   const { id } = useParams<{ id: string }>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const [showQr, setShowQr] = useState(false);
 
   const [batchPeserta, setBatchPeserta] = useState<PesertaBatch[][]>([]);
   const [sesi1Utama, setSesi1Utama] = useState<PesertaSesi[][]>([]);
@@ -310,6 +313,21 @@ export default function LiveHasil() {
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-white">Live Hasil Lomba</h1>
+
+      <div className="my-4">
+        <button
+          onClick={() => setShowQr(!showQr)}
+          className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded"
+        >
+          {showQr ? "Hide QR Code" : "Generate QR Code"}
+        </button>
+
+         {showQr && (
+          <div className="mt-4 bg-gray-800 p-4 inline-block rounded">
+            <QRCodeCanvas value={window.location.href} size={200} bgColor="#1f2937" fgColor="#ffffff" />
+          </div>
+        )}
+      </div>
 
       <h2 className="text-lg text-blue-400 mt-4 hidden">Batch Awal</h2>
       {batchPeserta.map((batch, idx) => renderBatchTable(batch, idx+1))}
