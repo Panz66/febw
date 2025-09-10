@@ -18,8 +18,6 @@ interface PesertaSesi {
   finishSesi1?: number | null;
   finish?: number | null;
   penaltyPoint?: number;
-  kategoriSesi2?: "Utama" | "Sekunder" | null; // opsional
-  matchIndexSesi2?: number | null;  
 }
 
 export default function Final() {
@@ -161,6 +159,7 @@ export default function Final() {
           .filter((p) => idSetSekunder1.has(p.id_pendaftaran))
           .sort((a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999));
 
+        // Setelah filter utama/se­kunder dari pesertaData
         const allocateByStructure = (
           poolSorted: PesertaSesi[],
           structure: PesertaSesi[][]
@@ -168,13 +167,8 @@ export default function Final() {
           const result: PesertaSesi[][] = structure.map(() => []);
           let cursor = 0;
 
-          // Urutkan poolSorted berdasarkan matchIndexSesi2 dan finishSesi1
-          const sortedPool = [...poolSorted].sort((a, b) => {
-            if ((a.matchIndexSesi2 ?? 0) !== (b.matchIndexSesi2 ?? 0)) {
-              return (a.matchIndexSesi2 ?? 0) - (b.matchIndexSesi2 ?? 0);
-            }
-            return (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
-          });
+          // Urutkan pool berdasarkan finishSesi1 agar urutan awal diprioritaskan
+          const sortedPool = [...poolSorted].sort((a, b) => (a.finishSesi1 ?? 9999) - (b.finishSesi1 ?? 9999));
 
           for (let mi = 0; mi < structure.length; mi++) {
             const size = structure[mi].length;
