@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import api from "@/services/api";
@@ -36,7 +37,7 @@ export default function OlahDataPeserta() {
   const [batchPeserta, setBatchPeserta] = useState<Peserta[][]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [jumlahBatch, setJumlahBatch] = useState<number>(1);
+  const [, setJumlahBatch] = useState<number>(1);
 
   useEffect(() => {
     const fetchPeserta = async () => {

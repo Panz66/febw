@@ -25,7 +25,7 @@ export default function Statistik() {
     const withCounts = res.data ?? [];
 
     setLombaData(withCounts);
-    setTotalPeserta(withCounts.reduce((acc, l) => acc + l.pesertaCount, 0));
+    setTotalPeserta(withCounts.reduce((acc: any, l: any) => acc + l.pesertaCount, 0));
   } catch (err) {
     console.error("Gagal fetch statistik", err);
   }

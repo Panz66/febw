@@ -9,6 +9,7 @@ export interface LombaType {
   jumlahPeserta: number;
   biaya: number;
   kategori: Kategori;
+  jumlahBatch?: number;
 }
 
 export type CreateLombaDto = Omit<LombaType, 'id'>;

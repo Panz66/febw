@@ -3,8 +3,10 @@ import api from "./api";
 export interface UserType {
   id_pendaftaran: number;
   nama: string;
-  email: string;
-  lomba_id: number;
+  plat_number: string,
+  community: string,
+  point1 : number,
+  point2 : number,
 }
 
 export const getUsers = () => api.get<UserType[]>("/user");

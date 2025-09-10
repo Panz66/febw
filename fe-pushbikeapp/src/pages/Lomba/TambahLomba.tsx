@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import LombaForm from "./LombaForm";
-import type { UserType } from "@/types/users";
+import type { UserType } from "@/services/users";
 
 export default function TambahLomba() {
   const [formData, setFormData] = useState<any | null>(null);
