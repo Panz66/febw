@@ -127,20 +127,20 @@ export default function Final() {
       const sekunder1Flat: PesertaSesi[] = [];
 
       batches.forEach((batchNum) => {
-      const batchPeserta = pesertaSesi1.filter((p) => p.batch === batchNum);
-      batchPeserta.sort((a, b) => a.totalPoint - b.totalPoint); // ascending
+  const batchPeserta = pesertaSesi1.filter((p) => p.batch === batchNum);
+  batchPeserta.sort((a, b) => a.finishSesi1! - b.finishSesi1!); // ascending finishSesi1
 
-      const half = Math.ceil(batchPeserta.length / 2);
+  const half = Math.ceil(batchPeserta.length / 2);
 
-      // beri matchIndexSesi2 sesuai urutan asli
-      batchPeserta.slice(0, half).forEach((p, idx) => {
-        utama1Flat.push({ ...p, matchIndexSesi2: idx });
-      });
+  batchPeserta.slice(0, half).forEach((p, idx) => {
+    utama1Flat.push({ ...p, matchIndexSesi2: idx }); // penting
+  });
 
-      batchPeserta.slice(half).forEach((p, idx) => {
-        sekunder1Flat.push({ ...p, matchIndexSesi2: idx });
-      });
-    });
+  batchPeserta.slice(half).forEach((p, idx) => {
+    sekunder1Flat.push({ ...p, matchIndexSesi2: idx }); // penting
+  });
+});
+
 
 
       const buildMatchesLikeSession1 = (arr: PesertaSesi[], batchesAll: number[]) => {
@@ -182,22 +182,24 @@ export default function Final() {
 
       // --- alokasikan peserta ke match berdasarkan struktur sesi 1 ---
       const allocateByStructure = (pool: PesertaSesi[], structure: PesertaSesi[][]) => {
-      const result: PesertaSesi[][] = structure.map(() => []);
-      let cursor = 0;
+  const result: PesertaSesi[][] = structure.map(() => []);
+  let cursor = 0;
 
-      // sort pool berdasarkan matchIndexSesi2 lalu finishSesi1
-      const sortedPool = [...pool].sort((a, b) => {
-        return (a.matchIndexSesi2 ?? 0) - (b.matchIndexSesi2 ?? 0) ||
-              (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
-      });
+  // urut pool berdasarkan matchIndexSesi2 dan finishSesi1
+  const sortedPool = [...pool].sort((a, b) => {
+    return (a.matchIndexSesi2! - b.matchIndexSesi2!) ||
+           ((a.finishSesi1 ?? 999) - (b.finishSesi1 ?? 999));
+  });
 
-      for (let mi = 0; mi < structure.length; mi++) {
-        const size = structure[mi].length;
-        result[mi] = sortedPool.slice(cursor, cursor + size);
-        cursor += size;
-      }
-      return result;
-    };
+  for (let mi = 0; mi < structure.length; mi++) {
+    const size = structure[mi].length;
+    result[mi] = sortedPool.slice(cursor, cursor + size);
+    cursor += size;
+  }
+
+  return result;
+};
+
 
 
 
