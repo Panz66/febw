@@ -309,7 +309,7 @@ export default function LiveHasil() {
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold text-white">Live Hasil Lomba {id}</h1>
+      <h1 className="text-2xl font-bold text-white">Live Hasil Lomba</h1>
 
       <h2 className="text-lg text-blue-400 mt-4 hidden">Batch Awal</h2>
       {batchPeserta.map((batch, idx) => renderBatchTable(batch, idx+1))}
