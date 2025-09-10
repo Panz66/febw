@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "@/services/api";
 
 interface Pesan {
   id: number;
@@ -15,7 +15,7 @@ export default function LihatPesan() {
   useEffect(() => {
     const fetchPesan = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/pesan");
+        const res = await api.get<Pesan[]>("/pesan");
         setPesanList(res.data);
       } catch (err) {
         console.error("Gagal ambil pesan:", err);
