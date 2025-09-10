@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_BE_PUSHBIKEWEB_URL || "http://localhost:3000",
+  baseURL: "https://bebw-production.up.railway.app",
   headers: {
     "Content-Type": "application/json",
   },
