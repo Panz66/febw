@@ -314,21 +314,6 @@ export default function LiveHasil() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-white">Live Hasil Lomba</h1>
 
-      <div className="my-4">
-        <button
-          onClick={() => setShowQr(!showQr)}
-          className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded"
-        >
-          {showQr ? "Hide QR Code" : "Generate QR Code"}
-        </button>
-
-         {showQr && (
-          <div className="mt-4 bg-gray-800 p-4 inline-block rounded">
-            <QRCodeCanvas value={window.location.href} size={200} bgColor="#1f2937" fgColor="#ffffff" />
-          </div>
-        )}
-      </div>
-
       <h2 className="text-lg text-blue-400 mt-4 hidden">Batch Awal</h2>
       {batchPeserta.map((batch, idx) => renderBatchTable(batch, idx+1))}
 
@@ -343,6 +328,27 @@ export default function LiveHasil() {
 
       <h2 className="text-lg text-pink-400 mt-4 hidden">Sesi 2 - Sekunder</h2>
       {renderSesiTable(sesi2Sekunder, "Sesi 2 Sekunder")}
+
+      <div className="flex flex-col items-center my-6">
+        <button
+          onClick={() => setShowQr(!showQr)}
+          className="bg-cyan-500 hover:bg-cyan-600 text-white font-semibold py-2 px-4 rounded mb-4"
+        >
+          {showQr ? "Hide QR Code" : "Generate QR Code"}
+        </button>
+
+        {showQr && (
+          <div className="bg-gray-800 p-6 rounded-lg flex justify-center">
+            <QRCodeCanvas
+              value={window.location.href}
+              size={300}       // diperbesar sedikit
+              bgColor="#1f2937"
+              fgColor="#ffffff"
+            />
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
