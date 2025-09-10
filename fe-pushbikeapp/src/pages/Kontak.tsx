@@ -1,6 +1,6 @@
 // src/pages/Kontak.tsx
 import { useState } from "react";
-import axios from "axios";
+import api from "@/services/api";
 
 export default function Kontak() {
   const [formData, setFormData] = useState({
@@ -21,7 +21,7 @@ export default function Kontak() {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post("http://localhost:3000/pesan", formData);
+      await api.post("/pesan", formData);
       alert("Pesan berhasil dikirim!");
       setFormData({ nama: "", email: "", pesan: "" });
     } catch (error) {
