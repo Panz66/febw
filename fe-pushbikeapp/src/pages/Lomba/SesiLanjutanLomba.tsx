@@ -83,25 +83,25 @@ export default function PertandinganLanjutan() {
         });
 
         const buatMatch = (pesertaArray: Peserta[], batchCountLocal: number) => {
-      const matches: Peserta[][] = [];
-      const halfBatch = Math.ceil(batchCountLocal / 2);
+          const matches: Peserta[][] = [];
+          const halfBatch = Math.ceil(batchCountLocal / 2);
 
-      for (let i = 0; i < halfBatch; i++) {
-        const batchA = pesertaArray.filter((p) => p.batch === batches[i]);
-        const batchB = batches[i + halfBatch]
-          ? pesertaArray.filter((p) => p.batch === batches[i + halfBatch])
-          : [];
+          for (let i = 0; i < halfBatch; i++) {
+            const match: Peserta[] = [];
+            const batchA = pesertaArray.filter((p) => p.batch === batches[i]);
+            const batchB = pesertaArray.filter((p) =>
+              batches[i + halfBatch] ? p.batch === batches[i + halfBatch] : false
+            );
+            const maxLen = Math.max(batchA.length, batchB.length);
+            for (let j = 0; j < maxLen; j++) {
+              if (batchA[j]) match.push(batchA[j]);
+              if (batchB[j]) match.push(batchB[j]);
+            }
+            matches.push(match);
+          }
 
-        // Urutkan batchA dan batchB berdasarkan finish atau totalPoint (prioritas awal)
-        batchA.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
-        batchB.sort((a, b) => (a.finish ?? 0) - (b.finish ?? 0));
-
-        // Gabungkan tanpa interleave, match awal batchA dulu, batchB setelahnya
-        matches.push([...batchA, ...batchB]);
-      }
-
-      return matches;
-    };
+          return matches;
+        };
 
         setMatchesUtama(buatMatch(utama, batchCount));
         setMatchesSekunder(buatMatch(sekunder, batchCount));

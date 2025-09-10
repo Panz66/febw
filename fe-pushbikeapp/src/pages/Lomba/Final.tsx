@@ -18,6 +18,8 @@ interface PesertaSesi {
   finishSesi1?: number | null;
   finish?: number | null;
   penaltyPoint?: number;
+  kategoriSesi2?: "Utama" | "Sekunder" | null; // opsional
+  matchIndexSesi2?: number | null;  
 }
 
 export default function Final() {
@@ -165,13 +167,23 @@ export default function Final() {
         ) => {
           const result: PesertaSesi[][] = structure.map(() => []);
           let cursor = 0;
+
+          // Urutkan poolSorted berdasarkan matchIndexSesi2 dan finishSesi1
+          const sortedPool = [...poolSorted].sort((a, b) => {
+            if ((a.matchIndexSesi2 ?? 0) !== (b.matchIndexSesi2 ?? 0)) {
+              return (a.matchIndexSesi2 ?? 0) - (b.matchIndexSesi2 ?? 0);
+            }
+            return (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
+          });
+
           for (let mi = 0; mi < structure.length; mi++) {
             const size = structure[mi].length;
-            result[mi] = poolSorted.slice(cursor, cursor + size);
+            result[mi] = sortedPool.slice(cursor, cursor + size);
             cursor += size;
           }
           return result;
         };
+
 
         setMatchesUtama(allocateByStructure(utama2Pool, matchesSesi1Utama));
         setMatchesSekunder(allocateByStructure(sekunder2Pool, matchesSesi1Sekunder));
