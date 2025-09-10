@@ -311,19 +311,19 @@ export default function LiveHasil() {
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-bold text-white">Live Hasil Lomba {id}</h1>
 
-      <h2 className="text-lg text-blue-400 mt-4">Batch Awal</h2>
+      <h2 className="text-lg text-blue-400 mt-4 hidden">Batch Awal</h2>
       {batchPeserta.map((batch, idx) => renderBatchTable(batch, idx+1))}
 
-      <h2 className="text-lg text-green-400 mt-4">Sesi 1 - Utama</h2>
+      <h2 className="text-lg text-green-400 mt-4 hidden">Sesi 1 - Utama</h2>
       {renderSesiTable(sesi1Utama, "Sesi 1 Utama")}
 
-      <h2 className="text-lg text-yellow-400 mt-4">Sesi 1 - Sekunder</h2>
+      <h2 className="text-lg text-yellow-400 mt-4 hidden">Sesi 1 - Sekunder</h2>
       {renderSesiTable(sesi1Sekunder, "Sesi 1 Sekunder")}
 
-      <h2 className="text-lg text-purple-400 mt-4">Sesi 2 - Utama</h2>
+      <h2 className="text-lg text-purple-400 mt-4 hidden">Sesi 2 - Utama</h2>
       {renderSesiTable(sesi2Utama, "Sesi 2 Utama")}
 
-      <h2 className="text-lg text-pink-400 mt-4">Sesi 2 - Sekunder</h2>
+      <h2 className="text-lg text-pink-400 mt-4 hidden">Sesi 2 - Sekunder</h2>
       {renderSesiTable(sesi2Sekunder, "Sesi 2 Sekunder")}
     </div>
   )
