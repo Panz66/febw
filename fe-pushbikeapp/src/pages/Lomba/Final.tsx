@@ -127,13 +127,21 @@ export default function Final() {
       const sekunder1Flat: PesertaSesi[] = [];
 
       batches.forEach((batchNum) => {
-        const batchPeserta = pesertaSesi1.filter((p) => p.batch === batchNum);
-        batchPeserta.sort((a, b) => a.totalPoint - b.totalPoint); // ascending
+      const batchPeserta = pesertaSesi1.filter((p) => p.batch === batchNum);
+      batchPeserta.sort((a, b) => a.totalPoint - b.totalPoint); // ascending
 
-        const half = Math.ceil(batchPeserta.length / 2);
-        utama1Flat.push(...batchPeserta.slice(0, half));
-        sekunder1Flat.push(...batchPeserta.slice(half));
+      const half = Math.ceil(batchPeserta.length / 2);
+
+      // beri matchIndexSesi2 sesuai urutan asli
+      batchPeserta.slice(0, half).forEach((p, idx) => {
+        utama1Flat.push({ ...p, matchIndexSesi2: idx });
       });
+
+      batchPeserta.slice(half).forEach((p, idx) => {
+        sekunder1Flat.push({ ...p, matchIndexSesi2: idx });
+      });
+    });
+
 
       const buildMatchesLikeSession1 = (arr: PesertaSesi[], batchesAll: number[]) => {
         const matches: PesertaSesi[][] = [];
@@ -173,28 +181,24 @@ export default function Final() {
         .sort((a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999));
 
       // --- alokasikan peserta ke match berdasarkan struktur sesi 1 ---
-      const allocateByStructure = (poolSorted: PesertaSesi[], structure: PesertaSesi[][]) => {
-        const result: PesertaSesi[][] = structure.map(() => []);
-        let cursor = 0;
+      const allocateByStructure = (pool: PesertaSesi[], structure: PesertaSesi[][]) => {
+      const result: PesertaSesi[][] = structure.map(() => []);
+      let cursor = 0;
 
-        // **Sort pool berdasarkan matchIndexSesi2 terlebih dahulu**
-        // Peserta dari match awal (matchIndexSesi2 rendah) masuk dulu
-        const sortedPool = [...poolSorted].sort((a, b) => {
-          // Jika matchIndex sama, urutkan berdasarkan finishSesi1
-          const idxA = a.matchIndexSesi2 ?? 0;
-          const idxB = b.matchIndexSesi2 ?? 0;
-          if (idxA !== idxB) return idxA - idxB;
-          return (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
-        });
+      // sort pool berdasarkan matchIndexSesi2 lalu finishSesi1
+      const sortedPool = [...pool].sort((a, b) => {
+        return (a.matchIndexSesi2 ?? 0) - (b.matchIndexSesi2 ?? 0) ||
+              (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
+      });
 
-        for (let mi = 0; mi < structure.length; mi++) {
-          const size = structure[mi].length;
-          result[mi] = sortedPool.slice(cursor, cursor + size);
-          cursor += size;
-        }
+      for (let mi = 0; mi < structure.length; mi++) {
+        const size = structure[mi].length;
+        result[mi] = sortedPool.slice(cursor, cursor + size);
+        cursor += size;
+      }
+      return result;
+    };
 
-        return result;
-      };
 
 
       setMatchesUtama(allocateByStructure(utama2Pool, matchesSesi1Utama));
