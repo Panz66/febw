@@ -177,10 +177,13 @@ export default function Final() {
         const result: PesertaSesi[][] = structure.map(() => []);
         let cursor = 0;
 
+        // **Sort pool berdasarkan matchIndexSesi2 terlebih dahulu**
+        // Peserta dari match awal (matchIndexSesi2 rendah) masuk dulu
         const sortedPool = [...poolSorted].sort((a, b) => {
-          if ((a.matchIndexSesi2 ?? 0) !== (b.matchIndexSesi2 ?? 0)) {
-            return (a.matchIndexSesi2 ?? 0) - (b.matchIndexSesi2 ?? 0);
-          }
+          // Jika matchIndex sama, urutkan berdasarkan finishSesi1
+          const idxA = a.matchIndexSesi2 ?? 0;
+          const idxB = b.matchIndexSesi2 ?? 0;
+          if (idxA !== idxB) return idxA - idxB;
           return (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999);
         });
 
@@ -189,8 +192,10 @@ export default function Final() {
           result[mi] = sortedPool.slice(cursor, cursor + size);
           cursor += size;
         }
+
         return result;
       };
+
 
       setMatchesUtama(allocateByStructure(utama2Pool, matchesSesi1Utama));
       setMatchesSekunder(allocateByStructure(sekunder2Pool, matchesSesi1Sekunder));
