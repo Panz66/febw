@@ -70,31 +70,10 @@ export default function Final() {
       try {
         if (!lombaId) return;
 
-        // === logika asli Anda (tidak diubah) ===
+        // === ambil data peserta ===
         const resPeserta = await api.get<any[]>(`/lomba/${lombaId}/peserta`);
-        const pesertaData: PesertaSesi[] = resPeserta.data.map((p: any) => {
-          const sesi1 = p.pointSesi?.find((s: any) => s.sesi === 1);
-          const sesi2 = p.pointSesi?.find((s: any) => s.sesi === 2);
-          return {
-            id_pendaftaran: p.id_pendaftaran,
-            batch: p.batch,
-            platNumber: p.platNumber,
-            nama: p.nama,
-            team: p.community ?? "",
-            point1: p.point1 ?? 0,
-            point2: p.point2 ?? 0,
-            totalPoint: (p.point1 ?? 0) + (p.point2 ?? 0),
-            finishSesi1: sesi1?.finish ?? null,
-            finish: sesi2?.finish ?? null,
-            penaltyPoint: sesi2?.penaltyPoint ?? 0,
-            gateMoto1: p.gateMoto1 ?? 0,
-            gateMoto2: p.gateMoto2 ?? 0,
-            matchName: sesi2?.matchName ?? null,
-           kategoriSesi2: sesi2?.kategori ?? null, // "Utama" / "Sekunder"
-            matchIndexSesi2: sesi2?.matchIndex ?? null,
-          };
-        });
 
+        // === mapping sesi 1 ===
         const pesertaSesi1 = resPeserta.data.map((p: any) => ({
           id_pendaftaran: p.id_pendaftaran,
           batch: p.batch,
@@ -148,52 +127,42 @@ export default function Final() {
         const matchesSesi1Utama = buildMatchesLikeSession1(utama1Flat, batches);
         const matchesSesi1Sekunder = buildMatchesLikeSession1(sekunder1Flat, batches);
 
-        const idSetUtama1 = new Set(utama1Flat.map((p) => p.id_pendaftaran));
-        const idSetSekunder1 = new Set(sekunder1Flat.map((p) => p.id_pendaftaran));
-
-        const utama2Pool = pesertaData
-          .filter((p) => idSetUtama1.has(p.id_pendaftaran))
-          .sort((a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999));
-
-        const sekunder2Pool = pesertaData
-          .filter((p) => idSetSekunder1.has(p.id_pendaftaran))
-          .sort((a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999));
-
-        const allocateByStructure = (
-          poolSorted: PesertaSesi[],
-          structure: PesertaSesi[][]
-        ) => {
-          const result: PesertaSesi[][] = structure.map(() => []);
-          let cursor = 0;
-          for (let mi = 0; mi < structure.length; mi++) {
-            const size = structure[mi].length;
-            result[mi] = poolSorted.slice(cursor, cursor + size);
-            cursor += size;
-          }
-          return result;
+        // === fungsi baru: gabung 2 match semifinal jadi final ===
+        const allocateFinalMerged = (
+          pool1: PesertaSesi[],
+          pool2: PesertaSesi[]
+        ): PesertaSesi[][] => {
+          const combined = [...pool1, ...pool2];
+          combined.sort(
+            (a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999)
+          );
+          return [combined.slice(0, 4), combined.slice(4, 8)];
         };
 
-        setMatchesUtama(allocateByStructure(utama2Pool, matchesSesi1Utama));
-        setMatchesSekunder(allocateByStructure(sekunder2Pool, matchesSesi1Sekunder));
+        // === assign ke state ===
+        const [elite, pro] = allocateFinalMerged(
+          matchesSesi1Utama[0],
+          matchesSesi1Utama[1]
+        );
+        const [rookie, novice] = allocateFinalMerged(
+          matchesSesi1Sekunder[0],
+          matchesSesi1Sekunder[1]
+        );
 
-        // --- inisialisasi matchNames sesuai data dari DB ---
-        // --- inisialisasi matchNames sesuai data dari matchesUtama dan matchesSekunder yang sudah di-allocate ---
+        setMatchesUtama([elite, pro]);
+        setMatchesSekunder([rookie, novice]);
+
+        // === inisialisasi nama match ===
         const initialMatchNames: Record<string, string> = {};
-
-        allocateByStructure(utama2Pool, matchesSesi1Utama).forEach((match, mi) => {
+        [elite, pro].forEach((match, mi) => {
           const first = match.find((p) => p.matchName);
           if (first?.matchName) initialMatchNames[`Utama-${mi}`] = first.matchName;
         });
-
-        allocateByStructure(sekunder2Pool, matchesSesi1Sekunder).forEach((match, mi) => {
+        [rookie, novice].forEach((match, mi) => {
           const first = match.find((p) => p.matchName);
           if (first?.matchName) initialMatchNames[`Sekunder-${mi}`] = first.matchName;
         });
-
         setMatchNames(initialMatchNames);
-
-
-        
       } catch (err) {
         console.error(err);
       } finally {
