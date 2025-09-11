@@ -276,36 +276,48 @@ export default function LiveHasil() {
   };
 
   const renderSesiTable = (matches: PesertaSesi[][], title: string) =>
-    matches.map((match, idx) => (
+  matches.map((match, idx) => {
+    // Urutkan berdasarkan finish kalau ada
+    const sortedMatch = match
+      .filter(p => p.finish !== null && p.finish !== undefined)
+      .sort((a, b) => (a.finish ?? 999999) - (b.finish ?? 999999));
+
+    if (sortedMatch.length === 0) return null;
+
+    return (
       <div key={`${title}-${idx}`} className="bg-gray-800 p-4 rounded-lg mb-6">
         <h2 className="text-xl font-semibold text-cyan-400">
-          {match[0]?.matchName ?? `${title} - Match ${idx+1}`}
+          {sortedMatch[0]?.matchName ?? `${title} - Match ${idx+1}`}
         </h2>
 
-        <table className="w-full border-collapse border border-gray-500 mt-2 text-white">
+        <table className="w-full border-collapse border border-gray-500 mt-2 text-white text-center">
           <thead>
             <tr>
-              <th className="border p-2">Gate Start</th>
-              <th className="border p-2">Finish</th>
-              <th className="border p-2">Plat Number</th>
-              <th className="border p-2">Nama Rider</th>
-              <th className="border p-2">Team</th>
+              <th className="border p-2 w-16">Gate Start</th>
+              <th className="border p-2 w-16">Finish</th>
+              <th className="border p-2 w-20">Plat</th>
+              <th className="border p-2 w-32">Nama Rider</th>
+              <th className="border p-2 w-32">Team</th>
+              <th className="border p-2 w-20">Total</th>
             </tr>
           </thead>
           <tbody>
-            {match.map((p, i) => (
-              <tr key={i}>
-                <td className="border p-2">{i+1}</td>
+            {sortedMatch.map((p, i) => (
+              <tr key={p.id_pendaftaran ?? i}>
+                <td className="border p-2">{i + 1}</td>
                 <td className="border p-2">{p.finish ?? "-"}</td>
                 <td className="border p-2">{p.platNumber}</td>
                 <td className="border p-2">{p.nama}</td>
                 <td className="border p-2">{p.team}</td>
+                <td className="border p-2">{p.totalPoint}</td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-    ));
+    );
+  });
+
 
   if (loading) return <p className="text-white">Loading...</p>;
   if (error) return <p className="text-red-400">{error}</p>;
