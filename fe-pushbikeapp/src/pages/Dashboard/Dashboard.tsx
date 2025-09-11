@@ -7,6 +7,7 @@ interface PointSesi {
   finish: number;
   point: number;
   pesertaIdPendaftaran: number;
+  matchName?: string; // penting karena kita mau kelompokkan per match
 }
 
 interface Peserta {
@@ -26,7 +27,7 @@ interface LombaDisplay {
   id: number;
   name: string;
   date: string;
-  winner: string;
+  winners: string[]; // ubah ke array karena banyak match
   image: string;
   kategori?: string;
 }
@@ -46,22 +47,46 @@ export default function DashboardUser() {
           const pesertaRes = await api.get<Peserta[]>(`/lomba/${lomba.id}/peserta`);
           const semuaPeserta = pesertaRes.data;
 
-          // cari winner sesi 2 berdasarkan finish terendah
+          // Ambil sesi 2, grup berdasarkan matchName
           const sesi2All = semuaPeserta
-            .map(p => ({ peserta: p, finish: p.pointSesi?.find(s => s.sesi === 2)?.finish ?? Infinity }))
-            .filter(p => p.finish !== Infinity);
+            .map((p) => {
+              const sesi2 = p.pointSesi?.find((s) => s.sesi === 2);
+              return sesi2
+                ? {
+                    peserta: p,
+                    finish: sesi2.finish,
+                    matchName: sesi2.matchName ?? "Unknown Match",
+                  }
+                : null;
+            })
+            .filter((x) => x !== null) as {
+            peserta: Peserta;
+            finish: number;
+            matchName: string;
+          }[];
 
-          let winnerName = "Belum ada";
-          if (sesi2All.length > 0) {
-            const winner = sesi2All.reduce((prev, curr) => (curr.finish < prev.finish ? curr : prev));
-            winnerName = winner.peserta.nama;
-          }
+          // Kelompokkan per matchName
+          const winnersPerMatch: string[] = [];
+          const matchGroups: Record<string, { peserta: Peserta; finish: number }[]> = {};
+
+          sesi2All.forEach((entry) => {
+            if (!matchGroups[entry.matchName]) matchGroups[entry.matchName] = [];
+            matchGroups[entry.matchName].push({ peserta: entry.peserta, finish: entry.finish });
+          });
+
+          // Cari finish terendah di setiap match
+          Object.entries(matchGroups).forEach(([matchName, pesertaList]) => {
+            const winner = pesertaList.reduce((prev, curr) =>
+              curr.finish < prev.finish ? curr : prev
+            );
+            winnersPerMatch.push(`${matchName}: ${winner.peserta.nama}`);
+          });
 
           lombaData.push({
             id: lomba.id,
             name: lomba.nama,
             date: lomba.tanggal,
-            winner: winnerName,
+            winners: winnersPerMatch.length > 0 ? winnersPerMatch : ["Belum ada"],
             image: `https://picsum.photos/300/150?random=${lomba.id}`,
             kategori: lomba.kategori,
           });
@@ -80,10 +105,9 @@ export default function DashboardUser() {
   // carousel otomatis tiap 3 detik
   useEffect(() => {
     const interval = setInterval(() => {
-      setCarouselIndex(prev => (prev + 1) % slides.length);
-    }, 3000); // 3000ms = 3 detik
-
-    return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+      setCarouselIndex((prev) => (prev + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [slides]);
 
   const nextSlide = () => setCarouselIndex((carouselIndex + 1) % slides.length);
@@ -107,56 +131,74 @@ export default function DashboardUser() {
                 className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg p-4 hover:bg-[#00ADB5] hover:text-[#222831] transition cursor-pointer"
               >
                 <h3 className="text-lg font-semibold">{lomba.name}</h3>
-                <p className="text-sm">Tanggal: {new Date(lomba.date).toLocaleDateString()}</p>
+                <p className="text-sm">
+                  Tanggal: {new Date(lomba.date).toLocaleDateString()}
+                </p>
                 {lomba.kategori && (
                   <p className="text-[#EEEEEE]/80 mt-1">
-                Kategori:{" "}
-                <span
-                  className={`font-semibold ${
-                    lomba.kategori === "boy" ? "text-blue-400" : lomba.kategori === "girl" ? "text-pink-400" : "text-[#00ADB5]"
-                  }`}
-                >
-                  {lomba.kategori}
-                </span>
-              </p>
-
+                    Kategori:{" "}
+                    <span
+                      className={`font-semibold ${
+                        lomba.kategori === "boy"
+                          ? "text-blue-400"
+                          : lomba.kategori === "girl"
+                          ? "text-pink-400"
+                          : "text-[#00ADB5]"
+                      }`}
+                    >
+                      {lomba.kategori}
+                    </span>
+                  </p>
                 )}
-                <p className="font-medium mt-2">Pemenang: {lomba.winner}</p>
+                <p className="font-medium mt-2">
+                  Pemenang:
+                  <ul className="list-disc list-inside mt-1">
+                    {lomba.winners.map((w, i) => (
+                      <li key={i}>{w}</li>
+                    ))}
+                  </ul>
+                </p>
               </div>
             ))}
           </div>
         </div>
 
         <div className="relative">
-  {slides.length > 0 && (
-    <div className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg overflow-hidden relative">
-      <img
-        src={slides[carouselIndex].image}
-        alt={slides[carouselIndex].name}
-        className="w-full h-36 object-cover"
-      />
-      <div className="p-4">
-        <h3 className="font-bold text-lg text-[#00ADB5]">{slides[carouselIndex].name}</h3>
-        <p className="text-sm">Pemenang: {slides[carouselIndex].winner}</p>
-      </div>
+          {slides.length > 0 && (
+            <div className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg overflow-hidden relative">
+              <img
+                src={slides[carouselIndex].image}
+                alt={slides[carouselIndex].name}
+                className="w-full h-36 object-cover"
+              />
+              <div className="p-4">
+                <h3 className="font-bold text-lg text-[#00ADB5]">
+                  {slides[carouselIndex].name}
+                </h3>
+                <p className="text-sm">Pemenang:</p>
+                <ul className="list-disc list-inside mt-1 text-sm">
+                  {slides[carouselIndex].winners.map((w, i) => (
+                    <li key={i}>{w}</li>
+                  ))}
+                </ul>
+              </div>
 
-      {/* Tombol navigasi kecil dan transparan */}
-      <button
-        onClick={prevSlide}
-        className="absolute top-1/2 left-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
-      >
-        ◀
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute top-1/2 right-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
-      >
-        ▶
-      </button>
-    </div>
-  )}
-</div>
-
+              {/* Tombol navigasi */}
+              <button
+                onClick={prevSlide}
+                className="absolute top-1/2 left-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
+              >
+                ◀
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute top-1/2 right-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
+              >
+                ▶
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
