@@ -166,22 +166,19 @@ export default function Final() {
         poolSorted: PesertaSesi[],
         structure: PesertaSesi[][]
       ) => {
-        const result: PesertaSesi[][] = [];
-        let cursor = 0;
+        return structure.map(matchOrigin => {
+          // ambil peserta dari pool yang ada di matchOrigin ini
+          const taken = poolSorted.filter(p =>
+            matchOrigin.some(m => m.id_pendaftaran === p.id_pendaftaran)
+          );
 
-        for (let mi = 0; mi < structure.length; mi++) {
-          const size = structure[mi].length;
-          const taken = poolSorted.slice(cursor, cursor + size);
-
-          // urutkan sesuai finish sesi 1 untuk gate order
-          taken.sort((a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999));
-
-          result.push(taken);
-          cursor += size;
-        }
-
-        return result;
+          // urutkan sesuai finish sesi 1 → gate
+          return taken.sort(
+            (a, b) => (a.finishSesi1 ?? 999999) - (b.finishSesi1 ?? 999999)
+          );
+        });
       };
+
 
       // === assign ke state ===
       setMatchesUtama(allocateByMatchOrigin(utama2Pool, matchesSesi1Utama));
