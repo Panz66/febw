@@ -7,6 +7,7 @@ interface PointSesi {
   finish: number;
   point: number;
   pesertaIdPendaftaran: number;
+  matchName?: string;
 }
 
 interface Peserta {
@@ -22,19 +23,24 @@ interface Lomba {
   kategori?: string;
 }
 
+interface MatchWinner {
+  matchName: string;
+  winner: string;
+}
+
 interface LombaDisplay {
   id: number;
   name: string;
   date: string;
-  winner: string;
-  image: string;
   kategori?: string;
+  winners: MatchWinner[]; // semua pemenang sesi 2 untuk lomba ini
 }
 
 export default function DashboardUser() {
   const [carouselIndex, setCarouselIndex] = useState(0);
   const [lombaCards, setLombaCards] = useState<LombaDisplay[]>([]);
-  const [slides, setSlides] = useState<LombaDisplay[]>([]);
+  const [slides, setSlides] = useState<Lomba[]>([]);
+  const [winnerIndexes, setWinnerIndexes] = useState<{ [key: number]: number }>({}); // indeks per lomba
 
   useEffect(() => {
     const fetchLomba = async () => {
@@ -46,29 +52,41 @@ export default function DashboardUser() {
           const pesertaRes = await api.get<Peserta[]>(`/lomba/${lomba.id}/peserta`);
           const semuaPeserta = pesertaRes.data;
 
-          // cari winner sesi 2 berdasarkan finish terendah
+          // ambil sesi 2 lalu group by matchName
           const sesi2All = semuaPeserta
-            .map(p => ({ peserta: p, finish: p.pointSesi?.find(s => s.sesi === 2)?.finish ?? Infinity }))
-            .filter(p => p.finish !== Infinity);
+            .map((p) => ({
+              nama: p.nama,
+              sesi2: p.pointSesi?.find((s) => s.sesi === 2),
+            }))
+            .filter((p) => p.sesi2 && p.sesi2.finish !== undefined);
 
-          let winnerName = "Belum ada";
-          if (sesi2All.length > 0) {
-            const winner = sesi2All.reduce((prev, curr) => (curr.finish < prev.finish ? curr : prev));
-            winnerName = winner.peserta.nama;
+          const matchGroups: { [matchName: string]: { nama: string; finish: number }[] } = {};
+          for (const p of sesi2All) {
+            const matchName = p.sesi2?.matchName ?? "Unknown";
+            if (!matchGroups[matchName]) matchGroups[matchName] = [];
+            matchGroups[matchName].push({ nama: p.nama, finish: p.sesi2!.finish });
+          }
+
+          const winners: MatchWinner[] = [];
+          for (const matchName in matchGroups) {
+            const pesertaMatch = matchGroups[matchName];
+            const winner = pesertaMatch.reduce((prev, curr) =>
+              curr.finish < prev.finish ? curr : prev
+            );
+            winners.push({ matchName, winner: winner.nama });
           }
 
           lombaData.push({
             id: lomba.id,
             name: lomba.nama,
             date: lomba.tanggal,
-            winner: winnerName,
-            image: `https://picsum.photos/300/150?random=${lomba.id}`,
             kategori: lomba.kategori,
+            winners,
           });
         }
 
         setLombaCards(lombaData);
-        setSlides(lombaData.slice(-3));
+        setSlides(res.data.slice(-3)); // gambar tetap dari lomba
       } catch (err) {
         console.error("Gagal fetch lomba:", err);
       }
@@ -77,17 +95,33 @@ export default function DashboardUser() {
     fetchLomba();
   }, []);
 
-  // carousel otomatis tiap 3 detik
+  // carousel otomatis tiap 3 detik untuk gambar
   useEffect(() => {
     const interval = setInterval(() => {
-      setCarouselIndex(prev => (prev + 1) % slides.length);
-    }, 3000); // 3000ms = 3 detik
-
-    return () => clearInterval(interval); // bersihkan interval saat komponen unmount
+      setCarouselIndex((prev) => (prev + 1) % slides.length);
+    }, 3000);
+    return () => clearInterval(interval);
   }, [slides]);
 
-  const nextSlide = () => setCarouselIndex((carouselIndex + 1) % slides.length);
-  const prevSlide = () => setCarouselIndex((carouselIndex - 1 + slides.length) % slides.length);
+  // mini-carousel winners per lomba
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWinnerIndexes((prev) => {
+        const newIndexes: { [key: number]: number } = { ...prev };
+        for (const lomba of lombaCards) {
+          const current = prev[lomba.id] ?? 0;
+          newIndexes[lomba.id] = (current + 1) % lomba.winners.length;
+        }
+        return newIndexes;
+      });
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [lombaCards]);
+
+  const nextSlide = () =>
+    setCarouselIndex((carouselIndex + 1) % slides.length);
+  const prevSlide = () =>
+    setCarouselIndex((carouselIndex - 1 + slides.length) % slides.length);
 
   return (
     <div className="min-h-screen bg-[#222831] p-6 max-w-7xl mx-auto font-poppins">
@@ -96,6 +130,7 @@ export default function DashboardUser() {
       </h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {/* Card Grid */}
         <div className="md:col-span-2 space-y-4">
           <h2 className="text-xl font-semibold text-[#00ADB5] mb-2">
             Lomba Yang Sedang Berjalan
@@ -107,56 +142,62 @@ export default function DashboardUser() {
                 className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg p-4 hover:bg-[#00ADB5] hover:text-[#222831] transition cursor-pointer"
               >
                 <h3 className="text-lg font-semibold">{lomba.name}</h3>
-                <p className="text-sm">Tanggal: {new Date(lomba.date).toLocaleDateString()}</p>
+                <p className="text-sm">
+                  Tanggal: {new Date(lomba.date).toLocaleDateString()}
+                </p>
                 {lomba.kategori && (
                   <p className="text-[#EEEEEE]/80 mt-1">
-                Kategori:{" "}
-                <span
-                  className={`font-semibold ${
-                    lomba.kategori === "boy" ? "text-blue-400" : lomba.kategori === "girl" ? "text-pink-400" : "text-[#00ADB5]"
-                  }`}
-                >
-                  {lomba.kategori}
-                </span>
-              </p>
-
+                    Kategori:{" "}
+                    <span
+                      className={`font-semibold ${
+                        lomba.kategori === "boy"
+                          ? "text-blue-400"
+                          : lomba.kategori === "girl"
+                          ? "text-pink-400"
+                          : "text-[#00ADB5]"
+                      }`}
+                    >
+                      {lomba.kategori}
+                    </span>
+                  </p>
                 )}
-                <p className="font-medium mt-2">Pemenang: {lomba.winner}</p>
+
+                {/* Mini-carousel winner per match sesi 2 */}
+                {lomba.winners.length > 0 && (
+                  <p className="font-medium mt-2">
+                    {lomba.winners[winnerIndexes[lomba.id] ?? 0]?.matchName} :{" "}
+                    {lomba.winners[winnerIndexes[lomba.id] ?? 0]?.winner}
+                  </p>
+                )}
               </div>
             ))}
           </div>
         </div>
 
+        {/* Carousel gambar (gambar saja) */}
         <div className="relative">
-  {slides.length > 0 && (
-    <div className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg overflow-hidden relative">
-      <img
-        src={slides[carouselIndex].image}
-        alt={slides[carouselIndex].name}
-        className="w-full h-36 object-cover"
-      />
-      <div className="p-4">
-        <h3 className="font-bold text-lg text-[#00ADB5]">{slides[carouselIndex].name}</h3>
-        <p className="text-sm">Pemenang: {slides[carouselIndex].winner}</p>
-      </div>
-
-      {/* Tombol navigasi kecil dan transparan */}
-      <button
-        onClick={prevSlide}
-        className="absolute top-1/2 left-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
-      >
-        ◀
-      </button>
-      <button
-        onClick={nextSlide}
-        className="absolute top-1/2 right-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
-      >
-        ▶
-      </button>
-    </div>
-  )}
-</div>
-
+          {slides.length > 0 && (
+            <div className="bg-[#393E46] shadow rounded-lg overflow-hidden relative">
+              <img
+                src={`https://picsum.photos/300/150?random=${slides[carouselIndex].id}`}
+                alt="Lomba Slide"
+                className="w-full h-36 object-cover"
+              />
+              <button
+                onClick={prevSlide}
+                className="absolute top-1/2 left-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
+              >
+                ◀
+              </button>
+              <button
+                onClick={nextSlide}
+                className="absolute top-1/2 right-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
+              >
+                ▶
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
