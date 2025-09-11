@@ -72,6 +72,26 @@ export default function Final() {
 
         // === ambil data peserta ===
         const resPeserta = await api.get<any[]>(`/lomba/${lombaId}/peserta`);
+        resPeserta.data.map((p: any) => {
+          const sesi1 = p.pointSesi?.find((s: any) => s.sesi === 1);
+          const sesi2 = p.pointSesi?.find((s: any) => s.sesi === 2);
+          return {
+            id_pendaftaran: p.id_pendaftaran,
+            batch: p.batch,
+            platNumber: p.platNumber,
+            nama: p.nama,
+            team: p.community ?? "",
+            point1: p.point1 ?? 0,
+            point2: p.point2 ?? 0,
+            totalPoint: (p.point1 ?? 0) + (p.point2 ?? 0),
+            finishSesi1: sesi1?.finish ?? null,
+            finish: sesi2?.finish ?? null,
+            penaltyPoint: sesi2?.penaltyPoint ?? 0,
+            gateMoto1: p.gateMoto1 ?? 0,
+            gateMoto2: p.gateMoto2 ?? 0,
+            matchName: sesi2?.matchName ?? null,
+          };
+        });
 
         // === mapping sesi 1 ===
         const pesertaSesi1 = resPeserta.data.map((p: any) => ({
