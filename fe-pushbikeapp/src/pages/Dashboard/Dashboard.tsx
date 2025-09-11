@@ -7,6 +7,7 @@ interface PointSesi {
   finish: number;
   point: number;
   pesertaIdPendaftaran: number;
+  matchName?: string;
 }
 
 interface Peserta {
@@ -22,19 +23,24 @@ interface Lomba {
   kategori?: string;
 }
 
+interface MatchWinner {
+  matchName: string;
+  winner: string;
+}
+
 interface LombaDisplay {
   id: number;
   name: string;
   date: string;
-  winner: string;
   kategori?: string;
+  winners: MatchWinner[]; // semua pemenang sesi 2 untuk lomba ini
 }
 
 export default function DashboardUser() {
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const [winnerIndex, setWinnerIndex] = useState(0); // untuk mini-carousel di card
   const [lombaCards, setLombaCards] = useState<LombaDisplay[]>([]);
-  const [slides, setSlides] = useState<LombaDisplay[]>([]);
+  const [slides, setSlides] = useState<Lomba[]>([]);
+  const [winnerIndexes, setWinnerIndexes] = useState<{ [key: number]: number }>({}); // indeks per lomba
 
   useEffect(() => {
     const fetchLomba = async () => {
@@ -46,33 +52,41 @@ export default function DashboardUser() {
           const pesertaRes = await api.get<Peserta[]>(`/lomba/${lomba.id}/peserta`);
           const semuaPeserta = pesertaRes.data;
 
-          // cari winner sesi 2 berdasarkan finish terendah
+          // ambil sesi 2 lalu group by matchName
           const sesi2All = semuaPeserta
             .map((p) => ({
-              peserta: p,
-              finish: p.pointSesi?.find((s) => s.sesi === 2)?.finish ?? Infinity,
+              nama: p.nama,
+              sesi2: p.pointSesi?.find((s) => s.sesi === 2),
             }))
-            .filter((p) => p.finish !== Infinity);
+            .filter((p) => p.sesi2 && p.sesi2.finish !== undefined);
 
-          let winnerName = "Belum ada";
-          if (sesi2All.length > 0) {
-            const winner = sesi2All.reduce((prev, curr) =>
+          const matchGroups: { [matchName: string]: { nama: string; finish: number }[] } = {};
+          for (const p of sesi2All) {
+            const matchName = p.sesi2?.matchName ?? "Unknown";
+            if (!matchGroups[matchName]) matchGroups[matchName] = [];
+            matchGroups[matchName].push({ nama: p.nama, finish: p.sesi2!.finish });
+          }
+
+          const winners: MatchWinner[] = [];
+          for (const matchName in matchGroups) {
+            const pesertaMatch = matchGroups[matchName];
+            const winner = pesertaMatch.reduce((prev, curr) =>
               curr.finish < prev.finish ? curr : prev
             );
-            winnerName = winner.peserta.nama;
+            winners.push({ matchName, winner: winner.nama });
           }
 
           lombaData.push({
             id: lomba.id,
             name: lomba.nama,
             date: lomba.tanggal,
-            winner: winnerName,
             kategori: lomba.kategori,
+            winners,
           });
         }
 
         setLombaCards(lombaData);
-        setSlides(lombaData.slice(-3));
+        setSlides(res.data.slice(-3)); // gambar tetap dari lomba
       } catch (err) {
         console.error("Gagal fetch lomba:", err);
       }
@@ -89,10 +103,17 @@ export default function DashboardUser() {
     return () => clearInterval(interval);
   }, [slides]);
 
-  // mini-carousel untuk pemenang di card
+  // mini-carousel winners per lomba
   useEffect(() => {
     const interval = setInterval(() => {
-      setWinnerIndex((prev) => (prev + 1) % lombaCards.length);
+      setWinnerIndexes((prev) => {
+        const newIndexes: { [key: number]: number } = { ...prev };
+        for (const lomba of lombaCards) {
+          const current = prev[lomba.id] ?? 0;
+          newIndexes[lomba.id] = (current + 1) % lomba.winners.length;
+        }
+        return newIndexes;
+      });
     }, 3000);
     return () => clearInterval(interval);
   }, [lombaCards]);
@@ -141,12 +162,11 @@ export default function DashboardUser() {
                   </p>
                 )}
 
-                {/* Mini-carousel untuk pemenang */}
-                {lombaCards.length > 0 && (
+                {/* Mini-carousel winner per match sesi 2 */}
+                {lomba.winners.length > 0 && (
                   <p className="font-medium mt-2">
-                    Pemenang:{" "}
-                    {lombaCards[winnerIndex]?.name} :{" "}
-                    {lombaCards[winnerIndex]?.winner}
+                    {lomba.winners[winnerIndexes[lomba.id] ?? 0]?.matchName} :{" "}
+                    {lomba.winners[winnerIndexes[lomba.id] ?? 0]?.winner}
                   </p>
                 )}
               </div>
@@ -154,24 +174,15 @@ export default function DashboardUser() {
           </div>
         </div>
 
-        {/* Carousel gambar */}
+        {/* Carousel gambar (gambar saja) */}
         <div className="relative">
           {slides.length > 0 && (
-            <div className="bg-[#393E46] text-[#EEEEEE] shadow rounded-lg overflow-hidden relative">
+            <div className="bg-[#393E46] shadow rounded-lg overflow-hidden relative">
               <img
                 src={`https://picsum.photos/300/150?random=${slides[carouselIndex].id}`}
-                alt={slides[carouselIndex].name}
+                alt="Lomba Slide"
                 className="w-full h-36 object-cover"
               />
-              <div className="p-4">
-                <h3 className="font-bold text-lg text-[#00ADB5]">
-                  {slides[carouselIndex].name}
-                </h3>
-                <p className="text-sm">
-                  Pemenang: {slides[carouselIndex].winner}
-                </p>
-              </div>
-
               <button
                 onClick={prevSlide}
                 className="absolute top-1/2 left-2 -translate-y-1/2 bg-[#00ADB5]/70 text-[#222831] px-2 py-1 rounded-full shadow hover:bg-[#00ADB5]/90 transition text-sm"
