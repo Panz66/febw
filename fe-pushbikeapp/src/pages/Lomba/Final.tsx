@@ -72,9 +72,11 @@ export default function Final() {
 
         // === ambil data peserta ===
         const resPeserta = await api.get<any[]>(`/lomba/${lombaId}/peserta`);
-        resPeserta.data.map((p: any) => {
+
+        const pesertaData: PesertaSesi[] = resPeserta.data.map((p: any) => {
           const sesi1 = p.pointSesi?.find((s: any) => s.sesi === 1);
           const sesi2 = p.pointSesi?.find((s: any) => s.sesi === 2);
+
           return {
             id_pendaftaran: p.id_pendaftaran,
             batch: p.batch,
@@ -85,41 +87,26 @@ export default function Final() {
             point2: p.point2 ?? 0,
             totalPoint: (p.point1 ?? 0) + (p.point2 ?? 0),
             finishSesi1: sesi1?.finish ?? null,
-            finish: sesi2?.finish ?? null,
-            penaltyPoint: sesi2?.penaltyPoint ?? 0,
+            finish: sesi2?.finish ?? null,            // ✅ ambil dari DB
+            penaltyPoint: sesi2?.penaltyPoint ?? 0,   // ✅ ambil dari DB
             gateMoto1: p.gateMoto1 ?? 0,
             gateMoto2: p.gateMoto2 ?? 0,
-            matchName: sesi2?.matchName ?? null,
+            matchName: sesi2?.matchName ?? null,      // ✅ ambil dari DB
           };
         });
 
-        // === mapping sesi 1 ===
-        const pesertaSesi1 = resPeserta.data.map((p: any) => ({
-          id_pendaftaran: p.id_pendaftaran,
-          batch: p.batch,
-          nama: p.nama,
-          platNumber: p.platNumber,
-          team: p.community ?? "",
-          point1: p.point1 ?? 0,
-          point2: p.point2 ?? 0,
-          totalPoint: (p.point1 ?? 0) + (p.point2 ?? 0),
-          finishSesi1: p.pointSesi?.find((s: any) => s.sesi === 1)?.finish ?? null,
-          gateMoto1: p.gateMoto1 ?? 0,
-          gateMoto2: p.gateMoto2 ?? 0,
-        }));
-
-        const batches = Array.from(new Set(pesertaSesi1.map((p) => p.batch))).sort(
+        const batches = Array.from(new Set(pesertaData.map((p) => p.batch))).sort(
           (a, b) => a - b
         );
 
         const utama1Flat: PesertaSesi[] = [];
         const sekunder1Flat: PesertaSesi[] = [];
         batches.forEach((batchNum) => {
-          const batchPeserta = pesertaSesi1.filter((p) => p.batch === batchNum);
+          const batchPeserta = pesertaData.filter((p) => p.batch === batchNum);
           batchPeserta.sort((a, b) => a.totalPoint - b.totalPoint);
           const half = Math.ceil(batchPeserta.length / 2);
-          utama1Flat.push(...(batchPeserta.slice(0, half) as any));
-          sekunder1Flat.push(...(batchPeserta.slice(half) as any));
+          utama1Flat.push(...batchPeserta.slice(0, half));
+          sekunder1Flat.push(...batchPeserta.slice(half));
         });
 
         const buildMatchesLikeSession1 = (arr: PesertaSesi[], batchesAll: number[]) => {
